@@ -23,6 +23,10 @@ Punto de venta de escritorio para una tienda de calzado: inventario por talla, c
 ./gradlew :desktop:app:run          # abre la app de escritorio
 ```
 
+## Despliegue
+
+CI y despliegue con GitHub Actions a un VPS con Docker y Nginx: ver [docs/deploy.md](docs/deploy.md).
+
 ## Licencia
 
 MIT

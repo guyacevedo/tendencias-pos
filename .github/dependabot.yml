@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule: { interval: weekly, day: monday, timezone: America/Bogota }
+    open-pull-requests-limit: 5
+    groups:
+      spring:
+        patterns: ["org.springframework*", "io.spring*"]
+      testing:
+        patterns: ["org.junit*", "org.assertj*", "org.testcontainers*", "com.tngtech.archunit*", "org.mockito*"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly, day: monday, timezone: America/Bogota }
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: docker
+    directory: /server
+    schedule: { interval: weekly, day: monday, timezone: America/Bogota }

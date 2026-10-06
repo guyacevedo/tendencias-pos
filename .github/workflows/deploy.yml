@@ -1,0 +1,132 @@
+name: Deploy
+
+# Corre cuando CI termina en verde sobre un push a main (o a mano).
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  DEPLOY_DIR: /opt/tendencias-pos
+  API_URL: https://apipos.comercializadora-neymar.com
+
+jobs:
+  publish:
+    name: Imagen → GHCR
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Nombre de la imagen
+        id: meta
+        run: |
+          sha="${{ github.event.workflow_run.head_sha || github.sha }}"
+          repo="${GITHUB_REPOSITORY,,}"
+          echo "image=ghcr.io/${repo}/api:${sha::12}" >> "$GITHUB_OUTPUT"
+          echo "latest=ghcr.io/${repo}/api:latest" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: server/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image }}
+            ${{ steps.meta.outputs.latest }}
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: VPS
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      IMAGE: ${{ needs.publish.outputs.image }}
+    steps:
+      - name: Verificar secretos
+        id: check
+        env:
+          HAS_KEY: ${{ secrets.VPS_SSH_KEY != '' }}
+        run: |
+          if [ -n "$VPS_HOST" ] && [ -n "$VPS_USER" ] && [ "$HAS_KEY" = "true" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Faltan VPS_HOST, VPS_USER o VPS_SSH_KEY: la imagen quedó en GHCR pero no se despliega."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v5
+        if: steps.check.outputs.ok == 'true'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          sparse-checkout: deploy
+
+      - name: Preparar SSH
+        if: steps.check.outputs.ok == 'true'
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -T 15 -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          printf 'Host vps\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/id_deploy\n  IdentitiesOnly yes\n' \
+            "$VPS_HOST" "$VPS_USER" > ~/.ssh/config
+
+      - name: Desplegar
+        if: steps.check.outputs.ok == 'true'
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ssh vps "cat > '$DEPLOY_DIR/compose.prod.yml'" < deploy/compose.prod.yml
+          # El token del job vale solo durante esta ejecución; se usa para el pull y se cierra la sesión.
+          printf '%s' "$GHCR_TOKEN" | ssh vps "docker login ghcr.io -u '${{ github.actor }}' --password-stdin" >/dev/null
+          ssh vps "set -e
+            cd '$DEPLOY_DIR'
+            sed -i 's|^TPOS_IMAGE=.*|TPOS_IMAGE=$IMAGE|' .env
+            docker compose -f compose.prod.yml pull api
+            docker compose -f compose.prod.yml up -d --remove-orphans --wait --wait-timeout 180
+            docker logout ghcr.io >/dev/null
+            docker image prune -f >/dev/null"
+
+      - name: Comprobar /api/version
+        if: steps.check.outputs.ok == 'true'
+        run: |
+          for i in $(seq 1 12); do
+            if curl -fsS --max-time 10 "$API_URL/api/version"; then echo; exit 0; fi
+            sleep 5
+          done
+          echo "::error::La API no respondió en $API_URL/api/version"
+          exit 1

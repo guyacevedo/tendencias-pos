@@ -1,0 +1,13 @@
+# Contexto de `docker build -f server/Dockerfile .`
+.git
+.github
+.gradle
+.idea
+**/build
+**/out
+**/.DS_Store
+docs
+deploy
+scripts
+*.md
+.env

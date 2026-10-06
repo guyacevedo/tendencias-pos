@@ -1,6 +1,6 @@
 # Estado del proyecto
 
-**Sesión actual:** 0.3 completada → siguiente: **0.4 CI y despliegue base**
+**Sesión actual:** 0.4 completada (falta confirmar CI verde en GitHub) → siguiente: **1.1** (F1-identidad.md)
 **Última actualización:** 2026-10-06
 
 ## Hecho
@@ -19,6 +19,14 @@
   `UiExecutor` (hilos virtuales → EDT); `ConnectionMonitor` + `OfflineBar` (sonda cada 5 s);
   `HomePresenter` muestra versiones. URL de la API: `-Dtpos.api.url` o `TPOS_API_URL`
   (por defecto `http://localhost:8080`). 29 pruebas en verde; verificado con capturas contra el servidor.
+- 0.4 — `.github/workflows/ci.yml` (build + `integrationTest`, reportes como artefacto), `deploy.yml`
+  (tras CI verde en `main`: imagen `ghcr.io/<repo>/api:<sha12>` y `:latest` → SSH → compose pull/up
+  `--wait` → prueba `/api/version`; sin secretos solo publica la imagen), `dependabot.yml`,
+  `server/Dockerfile` (3 etapas, capas Spring Boot, temurin 21 alpine, usuario `tpos`, `-Xmx512m`,
+  healthcheck), `.dockerignore`, `deploy/compose.prod.yml` (red `db` interna, API en `127.0.0.1:8080`),
+  `deploy/.env.example`, `deploy/nginx/apipos.conf`, `docs/deploy.md`. `prod` usa
+  `forward-headers-strategy: native`. Verificado: actionlint, `compose config`, jar extraído por capas
+  con perfil `prod` contra PostgreSQL real. No verificado aquí: `docker build` (Docker Hub bloqueado).
 
 ## Decisiones vigentes
 - Dominio API: `apipos.comercializadora-neymar.com`. VPS con Nginx existente: la API escucha en
@@ -29,8 +37,12 @@
   no usar plugins que solo existan en el portal de Gradle.
 
 ## Pendiente del usuario
-- Crear el repo público en GitHub y hacer el primer push (antes de 0.4).
+- Crear el repo público en GitHub, hacer push y confirmar CI y Deploy (imagen en GHCR) en verde.
+- Preparar el VPS siguiendo `docs/deploy.md` (DNS, Docker, usuario `deploy`, `.env`, Nginx, certbot,
+  secretos `VPS_HOST`/`VPS_USER`/`VPS_SSH_KEY`) y comprobar `https://apipos…/api/version`.
 - Probar en el Mac: `./gradlew :desktop:app:run` con el servidor `dev` encendido y luego apagado.
+
+- La carpeta del Mac no permite borrar: compilar en una copia (`rsync` a `~/tpos-copy`) o pedir permiso.
 
 ## Preguntas abiertas
 - (ninguna)

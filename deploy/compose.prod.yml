@@ -1,0 +1,49 @@
+# Producción en el VPS: docker compose -f compose.prod.yml up -d  (lee .env de la misma carpeta)
+name: tendencias-pos
+
+services:
+  api:
+    image: ${TPOS_IMAGE:?Falta TPOS_IMAGE en .env}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:?Falta POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER:?Falta POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD}
+      MIN_CLIENT_VERSION: ${MIN_CLIENT_VERSION:-0.1.0}
+    ports:
+      # Solo localhost: Nginx del VPS hace de proxy con TLS.
+      - "127.0.0.1:8080:8080"
+    networks: [web, db]
+    logging: &logging
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [db]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    logging: *logging
+
+networks:
+  web: {}
+  # Red interna: la base no tiene puertos publicados ni salida a internet.
+  db:
+    internal: true
+
+volumes:
+  pgdata:

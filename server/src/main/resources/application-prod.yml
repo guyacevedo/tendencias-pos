@@ -4,3 +4,6 @@ spring:
     url: ${DB_URL}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
+server:
+  # Detrás de Nginx: respetar X-Forwarded-* (esquema https, IP real del cliente).
+  forward-headers-strategy: native
