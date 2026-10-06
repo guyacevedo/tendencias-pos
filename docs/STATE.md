@@ -1,6 +1,6 @@
 # Estado del proyecto
 
-**Sesión actual:** 0.2 completada → siguiente: **0.3 Escritorio base**
+**Sesión actual:** 0.3 completada → siguiente: **0.4 CI y despliegue base**
 **Última actualización:** 2026-10-06
 
 ## Hecho
@@ -12,6 +12,13 @@
   `BusinessException`, `GlobalExceptionHandler`), `GET /api/version`, springdoc solo en `dev`,
   ArchUnit, `ApplicationIT` (`@Tag("it")`, tarea `integrationTest`), `deploy/compose.dev.yml`.
   Verificado contra PostgreSQL real: health UP, versión, 404 Problem Details, migración aplicada.
+- 0.3 — Escritorio: `ui-kit` con `Theme` (FlatLaf + `TposTheme.properties`, Inter, claro/oscuro
+  guardado en Preferences), `Icons` (Ikonli MDI2), `Toast`, `LoadingOverlay`, `MoneyField`/`MoneyFormat`
+  (COP: miles con punto, oculta ",00"). `app`: `MainFrame` con `SideMenu` (solo iconos < 1100 px) y `CardLayout` por
+  `Route`; `ApiClient` (HttpClient + Jackson 3, `X-Client-Version`, Problem Details → `ApiException`);
+  `UiExecutor` (hilos virtuales → EDT); `ConnectionMonitor` + `OfflineBar` (sonda cada 5 s);
+  `HomePresenter` muestra versiones. URL de la API: `-Dtpos.api.url` o `TPOS_API_URL`
+  (por defecto `http://localhost:8080`). 29 pruebas en verde; verificado con capturas contra el servidor.
 
 ## Decisiones vigentes
 - Dominio API: `apipos.comercializadora-neymar.com`. VPS con Nginx existente: la API escucha en
@@ -23,6 +30,7 @@
 
 ## Pendiente del usuario
 - Crear el repo público en GitHub y hacer el primer push (antes de 0.4).
+- Probar en el Mac: `./gradlew :desktop:app:run` con el servidor `dev` encendido y luego apagado.
 
 ## Preguntas abiertas
 - (ninguna)

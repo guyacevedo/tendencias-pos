@@ -5,5 +5,9 @@ dependencies {
     api(libs.flatlaf)
     api(libs.miglayout.swing)
     api(libs.ikonli.swing)
-    implementation(libs.ikonli.mdi2)
+    api(libs.ikonli.mdi2)
+    implementation(libs.flatlaf.extras)
+    implementation(libs.flatlaf.fonts.inter)
 }
+
+tasks.withType<Test>().configureEach { systemProperty("java.awt.headless", "true") }
