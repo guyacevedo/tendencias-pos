@@ -1,12 +1,17 @@
 # Estado del proyecto
 
-**Sesión actual:** 0.1 completada → siguiente: **0.2 Servidor base**
+**Sesión actual:** 0.2 completada → siguiente: **0.3 Escritorio base**
 **Última actualización:** 2026-10-06
 
 ## Hecho
 - 0.1 — Gradle 9.8 multi-proyecto (contracts, server, desktop:ui-kit, desktop:app), catálogo de
   versiones, convenciones en `build.gradle.kts` raíz, Spotless + `-Werror`, CLAUDE.md, specs de fases,
   script `scripts/claude-env.sh`, licencia MIT.
+- 0.2 — Servidor: JPA, Flyway (`V1__base`: `audit_log`), PostgreSQL, perfiles `dev`/`prod`
+  (`prod` exige `DB_URL`, `DB_USER`, `DB_PASSWORD`), Problem Details con `code` (`ErrorCode`,
+  `BusinessException`, `GlobalExceptionHandler`), `GET /api/version`, springdoc solo en `dev`,
+  ArchUnit, `ApplicationIT` (`@Tag("it")`, tarea `integrationTest`), `deploy/compose.dev.yml`.
+  Verificado contra PostgreSQL real: health UP, versión, 404 Problem Details, migración aplicada.
 
 ## Decisiones vigentes
 - Dominio API: `apipos.comercializadora-neymar.com`. VPS con Nginx existente: la API escucha en

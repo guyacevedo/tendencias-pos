@@ -49,3 +49,14 @@ excluyen localmente y corren en GitHub Actions.
 ## Git
 Conventional Commits en español (`feat(sales): …`). Un commit por sesión como mínimo. Pie del commit:
 `Co-Authored-By: Claude <noreply@anthropic.com>`.
+
+## Notas técnicas (Spring Boot 4 / Spring 7 / Testcontainers 2)
+- `@WebMvcTest` está en `org.springframework.boot.webmvc.test.autoconfigure`; usar `MockMvcTester` (AssertJ).
+  En slices, importar explícitamente `@Import(GlobalExceptionHandler.class)` y
+  `@EnableConfigurationProperties(TposProperties.class)` si el controlador los necesita.
+- Personalizar errores del framework en `GlobalExceptionHandler.createResponseEntity` (en
+  `handleExceptionInternal` el cuerpo aún puede ser `null`).
+- Testcontainers 2: `org.testcontainers.postgresql.PostgreSQLContainer` + `@ServiceConnection`.
+- Jackson 3 (`tools.jackson.*`) en servidor y escritorio.
+- Verificación contra PostgreSQL real sin Docker: `./gradlew :server:bootJar`, llevar el jar al entorno
+  de Claude en la nube (tiene PostgreSQL) y correrlo con el perfil `dev`.

@@ -1,0 +1,6 @@
+# Producción: todo llega por variables de entorno; si falta una, la app no arranca.
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}

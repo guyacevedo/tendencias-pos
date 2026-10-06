@@ -3,7 +3,7 @@
 ## 0.1 Esqueleto ✅ (completada)
 Gradle multi-proyecto, catálogo de versiones, convenciones, CLAUDE.md, STATE.md, specs, licencia.
 
-## 0.2 Servidor base
+## 0.2 Servidor base ✅ (completada)
 **Hacer**
 - Dependencias: data-jpa, validation, flyway (+ flyway-database-postgresql), postgresql, springdoc.
 - `deploy/compose.dev.yml` con PostgreSQL 17 (puerto 5432 solo local) para desarrollo en el Mac.

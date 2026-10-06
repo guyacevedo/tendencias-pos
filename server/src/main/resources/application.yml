@@ -1,5 +1,18 @@
 spring:
   application.name: tendencias-pos
+  profiles.default: dev
+  jpa:
+    open-in-view: false
+    hibernate.ddl-auto: validate
+  flyway.enabled: true
 server:
   port: ${SERVER_PORT:8080}
-management.endpoints.web.exposure.include: health
+  error.include-stacktrace: never
+tpos:
+  min-client-version: ${MIN_CLIENT_VERSION:0.1.0}
+springdoc:
+  api-docs.enabled: false
+  swagger-ui.enabled: false
+management:
+  endpoints.web.exposure.include: health
+  endpoint.health.show-details: never

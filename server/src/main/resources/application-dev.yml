@@ -1,0 +1,9 @@
+# Solo desarrollo local con deploy/compose.dev.yml. Credenciales de juguete, nunca en producción.
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tpos
+    username: tpos
+    password: tpos_dev
+springdoc:
+  api-docs.enabled: true
+  swagger-ui.enabled: true

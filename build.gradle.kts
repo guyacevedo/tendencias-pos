@@ -6,6 +6,11 @@ plugins {
     alias(libs.plugins.spotless) apply false
 }
 
+allprojects {
+    group = "com.guycode.tendenciaspos"
+    version = "0.1.0-SNAPSHOT"
+}
+
 val catalog = libs
 
 subprojects {
