@@ -1,6 +1,6 @@
 # Estado del proyecto
 
-**Sesión actual:** 0.4 completada (falta confirmar CI verde en GitHub) → siguiente: **1.1** (F1-identidad.md)
+**Sesión actual:** 0.4 completada → siguiente: **1.1** (F1-identidad.md)
 **Última actualización:** 2026-10-06
 
 ## Hecho
@@ -39,10 +39,12 @@
   no usar plugins que solo existan en el portal de Gradle.
 
 ## Pendiente del usuario
-- VPS: usuario `deploy`, carpeta, `.env` y DNS listos. Falta: rotar la llave `tpos_deploy` (se expuso),
-  `docker network create red-tpos`, paso 5 de `docs/deploy.md` (proxy + certificado), secretos en
-  GitHub, push y confirmar CI/Deploy en verde y `https://apipos…/api/version`.
 - Probar en el Mac: `./gradlew :desktop:app:run` con el servidor `dev` encendido y luego apagado.
+- Opcional: apuntar el escritorio a producción con `TPOS_API_URL=https://apipos.comercializadora-neymar.com`.
+
+## En producción
+- 2026-10-06: CI y Deploy en verde; `https://apipos.comercializadora-neymar.com/api/version` responde.
+  Llave de despliegue rotada; proxy de borde conectado a `red-tpos` (también en su compose).
 - La spec de 0.4 (F0) asumía Nginx en el host con `127.0.0.1:8080`; se cambió a red Docker compartida.
 
 ## Notas de entorno
