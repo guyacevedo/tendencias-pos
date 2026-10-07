@@ -18,3 +18,7 @@ updates:
   - package-ecosystem: docker
     directory: /server
     schedule: { interval: weekly, day: monday, timezone: America/Bogota }
+    ignore:
+      # El proyecto compila con toolchain Java 21 (LTS); subir de versión mayor es decisión manual.
+      - dependency-name: eclipse-temurin
+        update-types: ["version-update:semver-major"]
