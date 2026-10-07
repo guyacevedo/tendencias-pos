@@ -23,26 +23,31 @@
   (tras CI verde en `main`: imagen `ghcr.io/<repo>/api:<sha12>` y `:latest` → SSH → compose pull/up
   `--wait` → prueba `/api/version`; sin secretos solo publica la imagen), `dependabot.yml`,
   `server/Dockerfile` (3 etapas, capas Spring Boot, temurin 21 alpine, usuario `tpos`, `-Xmx512m`,
-  healthcheck), `.dockerignore`, `deploy/compose.prod.yml` (red `db` interna, API en `127.0.0.1:8080`),
-  `deploy/.env.example`, `deploy/nginx/apipos.conf`, `docs/deploy.md`. `prod` usa
+  healthcheck), `.dockerignore`, `deploy/compose.prod.yml` (red `db` interna, API solo en `red-tpos`),
+  `deploy/.env.example`, `deploy/nginx/apipos.conf.template`, `docs/deploy.md`. `prod` usa
   `forward-headers-strategy: native`. Verificado: actionlint, `compose config`, jar extraído por capas
   con perfil `prod` contra PostgreSQL real. No verificado aquí: `docker build` (Docker Hub bloqueado).
 
 ## Decisiones vigentes
-- Dominio API: `apipos.comercializadora-neymar.com`. VPS con Nginx existente: la API escucha en
-  `127.0.0.1:8080` y se agrega un `server` a Nginx.
+- Dominio API: `apipos.comercializadora-neymar.com` (DNS listo). VPS Oracle **ARM** (Ubuntu 24.04) con
+  proxy de borde en Docker (`/opt/pos-neymar-edge`, `pos-cn-proxy`): la API no publica puertos, el
+  proxy la alcanza como `tpos-api:8080` por la red externa `red-tpos`. Imagen arm64 (runner
+  `ubuntu-24.04-arm`).
 - Repo público en GitHub; despliegue con GitHub Actions al hacer push.
 - Facturas en dos formatos: carta y tirilla 80 mm. Sin migración de datos de 2020.
 - Solo Maven Central (el host `plugins-artifacts.gradle.org` está bloqueado en la red de Claude):
   no usar plugins que solo existan en el portal de Gradle.
 
 ## Pendiente del usuario
-- Crear el repo público en GitHub, hacer push y confirmar CI y Deploy (imagen en GHCR) en verde.
-- Preparar el VPS siguiendo `docs/deploy.md` (DNS, Docker, usuario `deploy`, `.env`, Nginx, certbot,
-  secretos `VPS_HOST`/`VPS_USER`/`VPS_SSH_KEY`) y comprobar `https://apipos…/api/version`.
+- VPS: usuario `deploy`, carpeta, `.env` y DNS listos. Falta: rotar la llave `tpos_deploy` (se expuso),
+  `docker network create red-tpos`, paso 5 de `docs/deploy.md` (proxy + certificado), secretos en
+  GitHub, push y confirmar CI/Deploy en verde y `https://apipos…/api/version`.
 - Probar en el Mac: `./gradlew :desktop:app:run` con el servidor `dev` encendido y luego apagado.
+- La spec de 0.4 (F0) asumía Nginx en el host con `127.0.0.1:8080`; se cambió a red Docker compartida.
 
-- La carpeta del Mac no permite borrar: compilar en una copia (`rsync` a `~/tpos-copy`) o pedir permiso.
+## Notas de entorno
+- La carpeta del Mac no permite borrar por defecto: compilar en una copia (`rsync` a `~/tpos-copy`)
+  y pedir permiso de borrado antes de usar git (deja `.lock`).
 
 ## Preguntas abiertas
 - (ninguna)

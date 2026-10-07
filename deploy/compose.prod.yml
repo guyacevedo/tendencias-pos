@@ -14,10 +14,11 @@ services:
       DB_USER: ${POSTGRES_USER:?Falta POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD}
       MIN_CLIENT_VERSION: ${MIN_CLIENT_VERSION:-0.1.0}
-    ports:
-      # Solo localhost: Nginx del VPS hace de proxy con TLS.
-      - "127.0.0.1:8080:8080"
-    networks: [web, db]
+    # Sin puertos en el host: el proxy de borde (pos-cn-proxy) llega por red-tpos.
+    networks:
+      red-tpos:
+        aliases: [tpos-api]
+      db: {}
     logging: &logging
       driver: json-file
       options: { max-size: "10m", max-file: "5" }
@@ -40,7 +41,9 @@ services:
     logging: *logging
 
 networks:
-  web: {}
+  # Compartida con pos-cn-proxy. Crear una vez: docker network create red-tpos
+  red-tpos:
+    external: true
   # Red interna: la base no tiene puertos publicados ni salida a internet.
   db:
     internal: true

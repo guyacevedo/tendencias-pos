@@ -1,0 +1,63 @@
+# =============================================================================
+# API de Tendencias POS — apipos.comercializadora-neymar.com
+#
+# Va en /opt/pos-neymar-edge/proxy/conf.d/ del VPS (montado como
+# /etc/nginx/templates en pos-cn-proxy). No usa variables de envsubst: el
+# NGINX_ENVSUBST_FILTER del edge solo toca TEST_DOMAIN|PROD_DOMAIN.
+#
+# tpos-api es el alias de la API en la red compartida red-tpos
+# (deploy/compose.prod.yml del repo tendencias-pos).
+#
+# Certificado en ./proxy/certs/live/apipos.comercializadora-neymar.com/ (certbot
+# webroot sobre ./proxy/acme). Sin ese certificado este archivo tumba el proxy:
+# seguir el orden de docs/deploy.md.
+# =============================================================================
+
+server {
+    listen 80;
+    server_name apipos.comercializadora-neymar.com;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/acme;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name apipos.comercializadora-neymar.com;
+
+    ssl_certificate     /etc/nginx/certs/live/apipos.comercializadora-neymar.com/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs/live/apipos.comercializadora-neymar.com/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+
+    server_tokens off;
+    client_max_body_size 1m;
+
+    # Solo API JSON: nada se renderiza en un navegador.
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "no-referrer" always;
+    add_header Content-Security-Policy "default-src 'none'; frame-ancestors 'none'" always;
+
+    # Resolución diferida (igual que pos-prod): el proxy arranca aunque la API
+    # aún no exista y responde 502 hasta que el stack esté arriba.
+    resolver 127.0.0.11 valid=10s;
+
+    # Actuator queda solo para el healthcheck interno de Docker.
+    location ^~ /actuator/ {
+        return 404;
+    }
+
+    location / {
+        include /etc/nginx/conf.d/proxy-comun.inc;
+        set $upstream_tpos http://tpos-api:8080;
+        proxy_pass $upstream_tpos;
+        proxy_read_timeout 60s;
+    }
+}

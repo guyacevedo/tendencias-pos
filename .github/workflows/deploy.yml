@@ -19,10 +19,11 @@ env:
 jobs:
   publish:
     name: Imagen → GHCR
+    # El VPS es ARM (Oracle Ampere): se construye nativo en arm64, sin emulación.
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 30
     permissions:
       contents: read
@@ -59,6 +60,7 @@ jobs:
             ${{ steps.meta.outputs.image }}
             ${{ steps.meta.outputs.latest }}
           labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          platforms: linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
