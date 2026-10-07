@@ -3,7 +3,7 @@
 #   docker build -f server/Dockerfile -t tendencias-pos-api .
 
 # 1) Compilar el jar ejecutable.
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM eclipse-temurin:25-jdk-alpine AS build
 WORKDIR /src
 COPY gradlew settings.gradle.kts build.gradle.kts ./
 COPY gradle gradle
@@ -15,13 +15,13 @@ RUN --mount=type=cache,target=/root/.gradle \
  && cp "$(ls server/build/libs/*.jar | grep -v -- '-plain.jar')" /src/app.jar
 
 # 2) Separar en capas (dependencias cambian poco; el código, en cada versión).
-FROM eclipse-temurin:21-jre-alpine AS layers
+FROM eclipse-temurin:25-jre-alpine AS layers
 WORKDIR /layers
 COPY --from=build /src/app.jar application.jar
 RUN java -Djarmode=tools -jar application.jar extract --layers --destination extracted
 
 # 3) Imagen final: solo JRE, usuario sin privilegios.
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 RUN addgroup -S tpos && adduser -S -G tpos -H -s /sbin/nologin tpos
 WORKDIR /app
 COPY --from=layers /layers/extracted/dependencies/ ./
