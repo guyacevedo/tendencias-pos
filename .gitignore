@@ -1,6 +1,9 @@
 .gradle/
 build/
-out/
+# Salida de IntelliJ solo en la raíz y en los módulos (no paquetes Java como adapter/out/)
+/out/
+/*/out/
+/desktop/*/out/
 .idea/
 *.iml
 .vscode/
