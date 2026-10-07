@@ -11,11 +11,14 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-flyway")
+    implementation("org.springframework.boot:spring-boot-starter-security-oauth2-resource-server")
+    implementation(libs.bcprov) // requerido por Argon2PasswordEncoder
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation(libs.springdoc.webmvc)
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-security-test")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation(platform(libs.testcontainers.bom))
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")

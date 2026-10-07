@@ -10,6 +10,14 @@ server:
   error.include-stacktrace: never
 tpos:
   min-client-version: ${MIN_CLIENT_VERSION:0.1.0}
+  security:
+    # HS256 de los access tokens; mínimo 32 bytes. Sin él la API no arranca.
+    jwt-secret: ${JWT_SECRET:}
+  identity:
+    access-token-ttl: 15m
+    refresh-token-ttl: 8h
+    # Solo se usa si no hay ningún usuario: crea "admin", que debe cambiarla al entrar.
+    admin-initial-password: ${ADMIN_INITIAL_PASSWORD:}
 springdoc:
   api-docs.enabled: false
   swagger-ui.enabled: false

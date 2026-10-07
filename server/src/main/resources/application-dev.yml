@@ -4,6 +4,9 @@ spring:
     url: jdbc:postgresql://localhost:5432/tpos
     username: tpos
     password: tpos_dev
+tpos:
+  security.jwt-secret: ${JWT_SECRET:dev-solo-local-nunca-en-produccion-0123456789}
+  identity.admin-initial-password: ${ADMIN_INITIAL_PASSWORD:admin-dev-123}
 springdoc:
   api-docs.enabled: true
   swagger-ui.enabled: true

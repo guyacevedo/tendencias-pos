@@ -3,21 +3,25 @@ package com.guycode.tendenciaspos.shared.web;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.guycode.tendenciaspos.shared.config.TposProperties;
+import com.guycode.tendenciaspos.support.ApiWebTest;
+import com.guycode.tendenciaspos.support.TestTokens;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
-@Import(GlobalExceptionHandler.class)
+@ApiWebTest
 @EnableConfigurationProperties(TposProperties.class)
 @WebMvcTest(controllers = VersionController.class, properties = "tpos.min-client-version=1.2.3")
 class VersionControllerTest {
     @Autowired
     MockMvcTester mvc;
+
+    @Autowired
+    TestTokens tokens;
 
     @Test
     void devuelveVersionDelServidorYMinimaDelCliente() {
@@ -30,7 +34,10 @@ class VersionControllerTest {
 
     @Test
     void rutaInexistenteRespondeProblemDetailsConCodigo() {
-        var result = mvc.get().uri("/api/no-existe").exchange();
+        var result = mvc.get()
+                .uri("/api/no-existe")
+                .header("Authorization", TestTokens.bearer(tokens.admin()))
+                .exchange();
         assertThat(result).hasStatus(HttpStatus.NOT_FOUND).hasContentType(MediaType.APPLICATION_PROBLEM_JSON);
         assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("NOT_FOUND");
     }

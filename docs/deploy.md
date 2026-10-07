@@ -67,6 +67,10 @@ exit
 
 - `TPOS_IMAGE=ghcr.io/guyacevedo/tendencias-pos/api:latest` (el despliegue lo actualiza solo).
 - `POSTGRES_PASSWORD`: `openssl rand -base64 32 | tr -d '/+='`. Guardarla también fuera del VPS.
+- `JWT_SECRET`: `openssl rand -base64 48 | tr -d '/+='` (mínimo 32 bytes). Sin ella la API no arranca;
+  cambiarla invalida los access tokens vigentes (los usuarios vuelven a entrar).
+- `ADMIN_INITIAL_PASSWORD`: clave del usuario `admin` que se crea solo si la base no tiene usuarios
+  (10 a 128 caracteres). En el primer ingreso el sistema obliga a cambiarla; luego puede quitarse del `.env`.
 
 `compose.prod.yml` no hace falta copiarlo: el workflow lo sube en cada despliegue.
 

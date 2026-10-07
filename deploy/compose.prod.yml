@@ -14,6 +14,8 @@ services:
       DB_USER: ${POSTGRES_USER:?Falta POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD}
       MIN_CLIENT_VERSION: ${MIN_CLIENT_VERSION:-0.1.0}
+      JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET}
+      ADMIN_INITIAL_PASSWORD: ${ADMIN_INITIAL_PASSWORD:-}
     # Sin puertos en el host: el proxy de borde (pos-cn-proxy) llega por red-tpos.
     networks:
       red-tpos:

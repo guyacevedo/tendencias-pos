@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -18,11 +19,19 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-    static final String CODE = "code";
+    public static final String CODE = "code";
 
     @ExceptionHandler(BusinessException.class)
     ProblemDetail handleBusiness(BusinessException ex) {
-        return problem(ex.code(), ex.getMessage());
+        var pd = problem(ex.code(), ex.getMessage());
+        ex.properties().forEach(pd::setProperty);
+        return pd;
+    }
+
+    /** {@code @PreAuthorize} rechazado dentro del controlador. */
+    @ExceptionHandler(AccessDeniedException.class)
+    ProblemDetail handleAccessDenied(AccessDeniedException ex) {
+        return problem(ErrorCode.FORBIDDEN, ErrorCode.FORBIDDEN.defaultMessage());
     }
 
     @ExceptionHandler(Exception.class)
@@ -54,7 +63,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return super.createResponseEntity(body, headers, status, request);
     }
 
-    private static ProblemDetail problem(ErrorCode code, String detail) {
+    public static ProblemDetail problem(ErrorCode code, String detail) {
         var pd = ProblemDetail.forStatusAndDetail(code.status(), detail);
         pd.setProperty(CODE, code.name());
         return pd;
