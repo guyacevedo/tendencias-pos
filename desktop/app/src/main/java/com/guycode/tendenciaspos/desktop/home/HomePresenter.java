@@ -1,7 +1,7 @@
 package com.guycode.tendenciaspos.desktop.home;
 
 import com.guycode.tendenciaspos.contracts.ApiVersion;
-import com.guycode.tendenciaspos.desktop.api.ApiException;
+import com.guycode.tendenciaspos.desktop.core.ApiErrors;
 import com.guycode.tendenciaspos.desktop.core.UiExecutor;
 import com.guycode.tendenciaspos.desktop.core.Versions;
 import java.util.concurrent.Callable;
@@ -35,13 +35,6 @@ public final class HomePresenter {
 
     private void onError(Exception error) {
         view.showLoading(false);
-        view.showError(messageFor(error));
-    }
-
-    static String messageFor(Exception error) {
-        if (error instanceof ApiException api) {
-            return api.isConnectivity() ? "No se pudo contactar al servidor." : api.getMessage();
-        }
-        return "Ocurrió un error inesperado.";
+        view.showError(ApiErrors.messageFor(error));
     }
 }

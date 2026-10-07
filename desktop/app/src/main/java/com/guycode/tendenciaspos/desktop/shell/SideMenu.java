@@ -3,20 +3,25 @@ package com.guycode.tendenciaspos.desktop.shell;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.guycode.tendenciaspos.ui.Icons;
 import com.guycode.tendenciaspos.ui.Theme;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import net.miginfocom.swing.MigLayout;
+import org.kordamp.ikonli.materialdesign2.MaterialDesignA;
+import org.kordamp.ikonli.materialdesign2.MaterialDesignL;
 import org.kordamp.ikonli.materialdesign2.MaterialDesignM;
 import org.kordamp.ikonli.materialdesign2.MaterialDesignW;
 
-/** Menú lateral con una entrada por {@link Route}. Contraído muestra solo iconos (con tooltip). */
+/** Menú lateral con las rutas que ve el usuario. Contraído muestra solo iconos (con tooltip). */
 final class SideMenu extends JPanel {
     private static final long serialVersionUID = 1L;
     private static final String EXPANDED_COLUMN = "[200!]";
@@ -24,12 +29,16 @@ final class SideMenu extends JPanel {
 
     private final Map<Route, JToggleButton> items = new EnumMap<>(Route.class);
     private final JButton themeButton = new JButton();
+    private final JButton logoutButton = new JButton();
+    private final JLabel userLabel = new JLabel();
     private final MigLayout layout = new MigLayout("wrap 1, insets 8, gap 2", EXPANDED_COLUMN, "");
+    private final String userName;
     private boolean collapsed;
 
-    SideMenu(Consumer<Route> onNavigate) {
+    SideMenu(Collection<Route> routes, String userName, Consumer<Route> onNavigate, Runnable onLogout) {
         setLayout(layout);
         putClientProperty(FlatClientProperties.STYLE, "background: $Tpos.sidebarBackground");
+        this.userName = userName;
 
         var toggle = new JButton(Icons.of(MaterialDesignM.MENU));
         toggle.setToolTipText("Mostrar u ocultar nombres del menú");
@@ -38,7 +47,7 @@ final class SideMenu extends JPanel {
         add(toggle, "h 40!, gapbottom 8");
 
         var group = new ButtonGroup();
-        for (var route : Route.values()) {
+        for (var route : routes) {
             var item = new JToggleButton(route.title(), Icons.of(route.icon()));
             item.setToolTipText(route.title());
             borderless(item);
@@ -48,17 +57,31 @@ final class SideMenu extends JPanel {
             add(item, "growx, h 40!");
         }
 
+        userLabel.setIcon(Icons.of(MaterialDesignA.ACCOUNT_CIRCLE_OUTLINE, Icons.MEDIUM));
+        userLabel.setIconTextGap(12);
+        userLabel.setToolTipText(userName);
+        add(new JSeparator(), "growx, pushy, aligny bottom, gaptop 8");
+        add(userLabel, "growx, h 32!");
+
+        logoutButton.setIcon(Icons.of(MaterialDesignL.LOGOUT));
+        borderless(logoutButton);
+        logoutButton.addActionListener(e -> onLogout.run());
+        add(logoutButton, "growx, h 40!");
+
         borderless(themeButton);
         themeButton.addActionListener(e -> {
             Theme.toggle();
-            refreshThemeButton();
+            refreshLabels();
         });
-        add(themeButton, "growx, h 40!, pushy, aligny bottom");
-        refreshThemeButton();
+        add(themeButton, "growx, h 40!");
+        refreshLabels();
     }
 
     void select(Route route) {
-        items.get(route).setSelected(true);
+        var item = items.get(route);
+        if (item != null) {
+            item.setSelected(true);
+        }
     }
 
     boolean isCollapsed() {
@@ -69,17 +92,21 @@ final class SideMenu extends JPanel {
         this.collapsed = collapsed;
         layout.setColumnConstraints(collapsed ? COLLAPSED_COLUMN : EXPANDED_COLUMN);
         items.forEach((route, item) -> applyLabel(item, route.title()));
-        refreshThemeButton();
+        refreshLabels();
         revalidate();
         repaint();
     }
 
-    private void refreshThemeButton() {
+    private void refreshLabels() {
         boolean dark = Theme.current() == Theme.Mode.DARK;
         themeButton.setIcon(Icons.of(dark ? MaterialDesignW.WHITE_BALANCE_SUNNY : MaterialDesignW.WEATHER_NIGHT));
-        var label = dark ? "Modo claro" : "Modo oscuro";
-        themeButton.setToolTipText(label);
-        applyLabel(themeButton, label);
+        var themeLabel = dark ? "Modo claro" : "Modo oscuro";
+        themeButton.setToolTipText(themeLabel);
+        applyLabel(themeButton, themeLabel);
+        logoutButton.setToolTipText("Cerrar sesión");
+        applyLabel(logoutButton, "Cerrar sesión");
+        userLabel.setText(collapsed ? "" : userName);
+        userLabel.setHorizontalAlignment(collapsed ? SwingConstants.CENTER : SwingConstants.LEADING);
     }
 
     private void applyLabel(AbstractButton button, String label) {

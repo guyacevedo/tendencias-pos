@@ -2,6 +2,7 @@ package com.guycode.tendenciaspos.desktop.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.entry;
 
 import com.guycode.tendenciaspos.contracts.ApiVersion;
 import com.guycode.tendenciaspos.desktop.core.ClientConfig;
@@ -144,6 +145,58 @@ class ApiClientTest implements ApiClient.ConnectionObserver {
         assertThatThrownBy(() -> client.get("/slow", Void.class))
                 .isInstanceOfSatisfying(
                         ApiException.class, e -> assertThat(e.code()).isEqualTo(ApiException.NETWORK_ERROR));
+    }
+
+    @Test
+    void sendsAuthorizationHeaderAndReportsRejection() {
+        var rejected = new CopyOnWriteArrayList<String>();
+        var sent = new AtomicReference<String>();
+        client.setAuthorization(new ApiClient.Authorization() {
+            @Override
+            public String headerFor(String path) {
+                return AuthApi.LOGIN_PATH.equals(path) ? null : "Bearer access-1";
+            }
+
+            @Override
+            public void rejected(String path) {
+                rejected.add(path);
+            }
+        });
+        server.createContext("/api/users", exchange -> {
+            sent.set(exchange.getRequestHeaders().getFirst("Authorization"));
+            reply(exchange, 401, "application/problem+json", """
+                    {"status":401,"detail":"La sesión expiró.","code":"TOKEN_EXPIRED"}""");
+        });
+        server.createContext(AuthApi.LOGIN_PATH, exchange -> {
+            sent.set(exchange.getRequestHeaders().getFirst("Authorization"));
+            reply(exchange, 401, "application/problem+json", """
+                    {"status":401,"detail":"Usuario o clave incorrectos.","code":"INVALID_CREDENTIALS"}""");
+        });
+
+        assertThatThrownBy(() -> client.get("/api/users", Void.class)).isInstanceOf(ApiException.class);
+        assertThat(sent.get()).isEqualTo("Bearer access-1");
+        assertThat(rejected).containsExactly("/api/users");
+
+        assertThatThrownBy(() -> client.post(AuthApi.LOGIN_PATH, "{}", Void.class))
+                .isInstanceOf(ApiException.class);
+        assertThat(sent.get()).isNull();
+        assertThat(rejected).containsExactly("/api/users", AuthApi.LOGIN_PATH);
+    }
+
+    @Test
+    void problemDetailsExtrasTravelInTheException() {
+        server.createContext("/api/settings", exchange -> reply(exchange, 400, "application/problem+json", """
+                {"status":400,"detail":"Hay datos inválidos en la solicitud.","code":"VALIDATION_FAILED",
+                 "errors":{"storeName":"El nombre de la tienda es obligatorio."},
+                 "lockedUntil":"2026-10-06T19:35:00Z"}"""));
+
+        assertThatThrownBy(() -> client.put("/api/settings", "{}", Void.class))
+                .isInstanceOfSatisfying(ApiException.class, e -> {
+                    assertThat(e.fieldErrors())
+                            .containsExactly(entry("storeName", "El nombre de la tienda es obligatorio."));
+                    assertThat(e.detail("lockedUntil")).isEqualTo("2026-10-06T19:35:00Z");
+                    assertThat(e.detail("nada")).isNull();
+                });
     }
 
     private static ClientConfig config(String url) {
