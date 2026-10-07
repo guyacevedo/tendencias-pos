@@ -4,7 +4,10 @@
 .gradle
 .idea
 **/build
-**/out
+# Salida de IntelliJ solo en raíz y módulos: `**/out` excluía también el paquete adapter/out/
+out
+*/out
+desktop/*/out
 **/.DS_Store
 docs
 deploy

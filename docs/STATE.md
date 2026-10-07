@@ -47,7 +47,8 @@
 - La spec de 0.4 (F0) asumía Nginx en el host con `127.0.0.1:8080`; se cambió a red Docker compartida.
 
 ## Notas de entorno
-- `.gitignore` ignoraba todo `out/` (incluido `adapter/out/`); ahora solo `/out/` y `*/out/` de módulos.
+- `.gitignore` y `.dockerignore` ignoraban todo `out/` (incluido `adapter/out/`); ahora solo la salida de
+  IntelliJ en raíz y módulos. Nunca usar `**/out` en esos archivos.
 - La carpeta del Mac no permite borrar por defecto: pedir permiso de borrado antes de usar git (deja `.lock`).
 - 1.1 se compiló en la nube (clon de GitHub, JDK 21 y PostgreSQL 16 locales). Maven Central responde 429
   intermitente: reintentar, o init script en `~/.gradle/init.d` con `repo1.maven.org` primero.
