@@ -16,7 +16,7 @@ assertj = "3.27.7"
 mockito = "5.24.0"
 bouncycastle = "1.86"
 palantir-format = "2.102.0"
-spotless = "8.10.3"
+spotless = "8.10.4"
 
 [libraries]
 springdoc-webmvc = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
